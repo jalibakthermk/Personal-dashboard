@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Personal Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<style>
+:root{
+  --bg:#f3f4f7;--card:#ffffff;--ink:#14161b;--mute:#6b7280;--line:#e4e7ec;--soft:#f1f4fa;
+  --acc:#2563eb;--acc-soft:#e0e9ff;--warm:#f59e0b;--ok:#16a34a;--ok-soft:#dcfce7;--bad:#dc2626;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.05);--r:16px;
+}
+:root[data-theme="dark"]{
+  --bg:#0e1014;--card:#171a20;--ink:#e9ebf0;--mute:#98a1b0;--line:#272c35;--soft:#1d2129;
+  --acc:#6ea4ff;--acc-soft:#1c2a45;--warm:#fbbf24;--ok:#34d399;--ok-soft:#123227;--bad:#f87171;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1014;--card:#171a20;--ink:#e9ebf0;--mute:#98a1b0;--line:#272c35;--soft:#1d2129;
+    --acc:#6ea4ff;--acc-soft:#1c2a45;--warm:#fbbf24;--ok:#34d399;--ok-soft:#123227;--bad:#f87171;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.mono{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
+
+/* header */
+.top{max-width:1400px;margin:0 auto;padding:24px 20px 8px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+.sub{color:var(--mute);margin-top:2px}
+.top-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:17px;display:grid;place-items:center}
+.icon-btn:hover{border-color:var(--acc)}
+.badge{font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--soft);color:var(--mute);border:1px solid var(--line);white-space:nowrap}
+.badge.ok{color:var(--ok)}.badge.warn{color:var(--warm)}.badge.bad{color:var(--bad)}
+
+/* grid */
+.grid{max-width:1400px;margin:0 auto;padding:12px 20px 40px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;min-width:0}
+.card h2{margin:0 0 12px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s8{grid-column:span 8}
+.stack{display:grid;gap:16px;align-content:start}
+@media (max-width:1150px){.s3,.s4,.s5{grid-column:span 6}.s6,.s8{grid-column:span 12}}
+@media (max-width:760px){.s3,.s4,.s5,.s6,.s8{grid-column:span 12}.top{padding:18px 16px 4px}.grid{padding:10px 16px 32px;gap:12px}.card{padding:16px}}
+.empty{color:var(--mute);font-size:13px;padding:6px 0}
+.link-btn{background:none;border:0;color:var(--acc);font-weight:600;font-size:12px;padding:0;text-transform:none;letter-spacing:0}
+.btn{border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:8px 12px;font-weight:600}
+.btn:hover{border-color:var(--acc)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+input[type=text],input[type=password],input[type=time],input[type=number],textarea{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px;outline:none;width:100%}
+input:focus,textarea:focus{border-color:var(--acc)}
+
+/* clocks */
+.clocks{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.clock{background:var(--soft);border-radius:12px;padding:12px 14px}
+.clabel{display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.pill{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--acc-soft);color:var(--acc)}
+.ctime{font-family:"JetBrains Mono",monospace;font-size:34px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.ctime small{font-size:16px;color:var(--mute);font-weight:500}
+.cdate{color:var(--mute);font-size:12px}
+.diff{margin:10px 0 14px;font-size:13px;color:var(--mute)}
+.diff b{color:var(--ink)}
+.otrack{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.olabel{width:22px;font-size:11px;font-weight:700;color:var(--mute)}
+.obar{position:relative;flex:1;height:14px;background:var(--soft);border-radius:7px;overflow:hidden}
+.oseg{position:absolute;top:0;bottom:0;border-radius:7px}
+.oseg.a{background:var(--acc)}.oseg.b{background:var(--warm)}.oseg.x{background:var(--ok);top:3px;bottom:3px;border-radius:4px}
+.onow{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.8}
+.oaxis{display:flex;justify-content:space-between;margin-left:30px;font-size:10px;color:var(--mute)}
+.onote{margin-top:8px;font-size:12px;color:var(--mute)}
+.onote b{color:var(--ok)}
+
+/* weather */
+.wx{display:grid;gap:12px}
+.wcity{background:var(--soft);border-radius:12px;padding:12px 14px}
+.wtop{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wname{font-weight:600;font-size:13px}
+.wnow{display:flex;align-items:center;gap:10px;margin-top:2px}
+.wicon{font-size:30px}
+.wtemp{font-size:30px;font-weight:700;letter-spacing:-.02em}
+.wdesc{font-size:12px;color:var(--mute)}
+.wdays{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.wday{background:var(--card);border-radius:8px;padding:6px;text-align:center;font-size:12px}
+.wday div:first-child{color:var(--mute)}
+
+/* KW + fx */
+.kw{display:flex;align-items:baseline;gap:8px}
+.kw .big{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.kw .lbl{font-weight:700;color:var(--acc)}
+.prog{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin:12px 0 6px}
+.prog i{display:block;height:100%;background:var(--acc)}
+.small{font-size:12px;color:var(--mute)}
+.fxrate{font-size:22px;font-weight:700}
+.fxrow{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;margin-top:8px}
+.fxrow span{font-weight:700;width:30px;color:var(--mute)}
+
+/* kanban */
+.kadd{display:flex;gap:8px;margin-bottom:12px}
+.kboard{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.kboard{grid-template-columns:1fr}.kcol{min-height:0}.klist{min-height:40px}}
+.kcol{background:var(--soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;min-height:180px}
+.khead{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:13px;margin:2px 4px 8px}
+.kcount{font-size:11px;background:var(--card);border-radius:999px;padding:1px 8px;color:var(--mute)}
+.klist{flex:1;display:flex;flex-direction:column;gap:8px;min-height:60px}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 10px;cursor:grab}
+.kcard:active{cursor:grabbing}
+.kcol[data-col=doing] .kcard{border-left:3px solid var(--warm)}
+.kcol[data-col=done] .kcard{border-left:3px solid var(--ok)}
+.kcol[data-col=done] .ktext{color:var(--mute);text-decoration:line-through}
+.ktext{word-break:break-word}
+.kmeta{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.tag{font-size:10px;font-weight:700;color:var(--acc);background:var(--acc-soft);border-radius:5px;padding:1px 6px}
+.kact{display:flex;gap:2px}
+.kact button{border:0;background:none;color:var(--mute);width:24px;height:22px;border-radius:6px;font-size:14px;line-height:1}
+.kact button:hover:not(:disabled){background:var(--soft);color:var(--ink)}
+.kact button:disabled{opacity:.25;cursor:default}
+.sortable-ghost{opacity:.35}
+
+/* pomodoro */
+.pmodes{display:flex;gap:6px;background:var(--soft);padding:4px;border-radius:10px}
+.pmodes button{flex:1;border:0;background:none;border-radius:8px;padding:6px;font-weight:600;font-size:12px;color:var(--mute)}
+.pmodes button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.ring{position:relative;width:200px;max-width:100%;aspect-ratio:1;margin:16px auto 10px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .rbg{stroke:var(--soft)}
+.ring .rfg{stroke:var(--acc);stroke-linecap:round;transition:stroke-dashoffset .4s linear}
+.ring.brk .rfg{stroke:var(--ok)}
+.rtxt{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.rtime{font-family:"JetBrains Mono",monospace;font-size:40px;font-weight:700}
+.rmode{font-size:12px;color:var(--mute)}
+.pctrl{display:flex;gap:8px;justify-content:center}
+.pctrl .btn{min-width:90px}
+.pdots{text-align:center;margin-top:12px;font-size:12px;color:var(--mute)}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calhead b{font-size:16px}
+.calnav{display:flex;gap:4px}
+.calnav button{border:1px solid var(--line);background:var(--soft);border-radius:8px;width:30px;height:30px}
+.calnav button.t{width:auto;padding:0 10px;font-size:12px;font-weight:600}
+.calgrid{display:grid;grid-template-columns:30px repeat(7,minmax(0,1fr));gap:3px}
+.dow,.cw-h{font-size:11px;color:var(--mute);text-align:center;font-weight:600;padding:2px 0}
+.cw{font-size:10px;color:var(--acc);display:grid;place-items:center;font-weight:700}
+.day{position:relative;aspect-ratio:1/0.85;border:0;border-radius:8px;background:var(--soft);font-size:13px;font-weight:500}
+.day.we{color:var(--mute)}
+.day.out{opacity:.35}
+.day.today{background:var(--acc-soft);color:var(--acc);font-weight:700}
+.day.sel{outline:2px solid var(--acc)}
+.day i{position:absolute;bottom:4px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--warm)}
+.calbody{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+@media (max-width:900px){.calbody{grid-template-columns:1fr}}
+.dayhead{font-weight:600;margin-bottom:8px}
+.evlist{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.ev{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:8px;padding:7px 9px}
+.ev .tm{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--acc);min-width:42px}
+.ev .tt{flex:1;word-break:break-word}
+.ev button{border:0;background:none;color:var(--mute);font-size:15px}
+.evadd{display:grid;grid-template-columns:96px 1fr auto;gap:6px}
+.upc{margin-top:14px}
+.upc .ev{background:none;border:1px solid var(--line)}
+
+/* notes + stats */
+.focus-in{font-size:15px;font-weight:600}
+textarea.notes{min-height:170px;resize:vertical;margin-top:12px;line-height:1.5}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:120px;margin-top:6px}
+.barc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.barc i{width:100%;max-width:28px;background:var(--acc);border-radius:6px 6px 3px 3px;min-height:3px}
+.barc.today i{background:var(--warm)}
+.barc span{font-size:10px;color:var(--mute)}
+.barc em{font-style:normal;font-size:10px;font-weight:700}
+.statrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px}
+.stat{background:var(--soft);border-radius:10px;padding:8px;text-align:center}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:11px;color:var(--mute)}
+
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);padding:0;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:20px;overflow:auto}
+.dlg h3{margin:0 0 4px;font-size:18px}
+.dlg h4{margin:18px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+.frow{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:6px}
+.fl{font-size:12px;color:var(--mute);margin:8px 0 4px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.smsg{font-size:12px;margin-top:8px;color:var(--acc);word-break:break-all}
+.help{font-size:12px;color:var(--mute);line-height:1.5}
+.help a{color:var(--acc)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1 id="greet">Hello</h1>
+    <div class="sub" id="todayLine"></div>
+  </div>
+  <div class="top-actions">
+    <span id="syncBadge" class="badge">● Local only</span>
+    <button class="icon-btn" id="themeBtn" title="Toggle light/dark">◐</button>
+    <button class="icon-btn" id="settingsBtn" title="Settings & sync">⚙</button>
+  </div>
+</header>
+
+<main class="grid">
+
+  <!-- Clocks -->
+  <section class="card s5">
+    <h2>World clock</h2>
+    <div class="clocks">
+      <div class="clock">
+        <div class="clabel"><span class="pill">IN</span> India <span class="small">IST</span></div>
+        <div class="ctime" id="tA">--:--</div>
+        <div class="cdate" id="dA"></div>
+      </div>
+      <div class="clock">
+        <div class="clabel"><span class="pill">DE</span> Germany <span class="small" id="abbrB"></span></div>
+        <div class="ctime" id="tB">--:--</div>
+        <div class="cdate" id="dB"></div>
+      </div>
+    </div>
+    <div class="diff" id="tzDiff"></div>
+    <div class="otrack"><span class="olabel">IN</span><div class="obar" id="barA"></div></div>
+    <div class="otrack"><span class="olabel">DE</span><div class="obar" id="barB"></div></div>
+    <div class="oaxis"><span>00</span><span>06</span><span>12</span><span>18</span><span>24 IST</span></div>
+    <div class="onote" id="overlapNote"></div>
+  </section>
+
+  <!-- Weather -->
+  <section class="card s4">
+    <h2>Weather <button class="link-btn" id="wxRefresh">Refresh</button></h2>
+    <div class="wx" id="wx"><div class="empty">Loading…</div></div>
+  </section>
+
+  <!-- KW + currency -->
+  <div class="stack s3">
+    <section class="card">
+      <h2>Calendar week</h2>
+      <div class="kw"><span class="lbl">KW</span><span class="big" id="kwNum">--</span></div>
+      <div class="small" id="kwRange"></div>
+      <div class="prog"><i id="yearProg"></i></div>
+      <div class="small" id="yearLine"></div>
+    </section>
+    <section class="card">
+      <h2>EUR ⇄ INR</h2>
+      <div class="fxrate" id="fxRate">…</div>
+      <div class="small" id="fxDate"></div>
+      <div class="fxrow"><span>€</span><input type="number" id="fxEur" value="1" min="0" step="any"></div>
+      <div class="fxrow"><span>₹</span><input type="number" id="fxInr" min="0" step="any"></div>
+    </section>
+  </div>
+
+  <!-- Kanban -->
+  <section class="card s8" id="kanban">
+    <h2>Kanban <button class="link-btn" id="clearDone">Clear done</button></h2>
+    <form class="kadd" id="kAddForm">
+      <input type="text" id="kAddIn" placeholder="Add a task and press Enter…" maxlength="300" autocomplete="off">
+      <button class="btn primary" type="submit">Add</button>
+    </form>
+    <div class="kboard">
+      <div class="kcol" data-col="todo"><div class="khead">To do <span class="kcount" id="c-todo">0</span></div><div class="klist" id="k-todo" data-col="todo"></div></div>
+      <div class="kcol" data-col="doing"><div class="khead">In progress <span class="kcount" id="c-doing">0</span></div><div class="klist" id="k-doing" data-col="doing"></div></div>
+      <div class="kcol" data-col="done"><div class="khead">Done <span class="kcount" id="c-done">0</span></div><div class="klist" id="k-done" data-col="done"></div></div>
+    </div>
+  </section>
+
+  <!-- Pomodoro -->
+  <section class="card s4">
+    <h2>Pomodoro</h2>
+    <div class="pmodes" id="pModes">
+      <button data-m="focus">Focus 25</button><button data-m="short">Short 5</button><button data-m="long">Long 15</button>
+    </div>
+    <div class="ring" id="ring">
+      <svg viewBox="0 0 200 200"><circle class="rbg" cx="100" cy="100" r="88"/><circle class="rfg" id="ringFg" cx="100" cy="100" r="88"/></svg>
+      <div class="rtxt"><div class="rtime" id="pTime">25:00</div><div class="rmode" id="pMode">Focus</div></div>
+    </div>
+    <div class="pctrl">
+      <button class="btn primary" id="pStart">Start</button>
+      <button class="btn" id="pReset">Reset</button>
+      <button class="btn" id="pSkip">Skip</button>
+    </div>
+    <div class="pdots" id="pDots"></div>
+  </section>
+
+  <!-- Calendar -->
+  <section class="card s6">
+    <h2>Calendar</h2>
+    <div class="calbody">
+      <div>
+        <div class="calhead">
+          <b id="calTitle"></b>
+          <div class="calnav"><button id="calPrev">‹</button><button class="t" id="calToday">Today</button><button id="calNext">›</button></div>
+        </div>
+        <div class="calgrid" id="calGrid"></div>
+      </div>
+      <div>
+        <div class="dayhead" id="dayHead"></div>
+        <div class="evlist" id="evList"></div>
+        <form class="evadd" id="evForm">
+          <input type="time" id="evTime">
+          <input type="text" id="evTitle" placeholder="New event" maxlength="200" autocomplete="off">
+          <button class="btn primary" type="submit">+</button>
+        </form>
+        <div class="upc">
+          <div class="small" style="margin-bottom:6px;font-weight:600">Upcoming</div>
+          <div class="evlist" id="upList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Focus + notes -->
+  <section class="card s3">
+    <h2>Today's focus</h2>
+    <input type="text" class="focus-in" id="focusIn" placeholder="The one thing that matters today" maxlength="200">
+    <textarea class="notes" id="notesIn" placeholder="Quick notes…"></textarea>
+  </section>
+
+  <!-- Stats -->
+  <section class="card s3">
+    <h2>Focus sessions · 7 days</h2>
+    <div class="bars" id="bars"></div>
+    <div class="statrow">
+      <div class="stat"><b id="stToday">0</b><span>today</span></div>
+      <div class="stat"><b id="stWeek">0h</b><span>this KW</span></div>
+      <div class="stat"><b id="stStreak">0</b><span>day streak</span></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Settings -->
+<dialog id="dlg">
+  <div class="dlg">
+    <h3>Settings</h3>
+    <div class="help">Everything is saved in this browser. Connect a private GitHub Gist to sync across devices and survive cache clearing.</div>
+
+    <h4>You</h4>
+    <div class="fl">Name for greeting</div>
+    <input type="text" id="sName" maxlength="40">
+
+    <h4>Weather cities</h4>
+    <div class="fl">City 1 (India)</div>
+    <div class="frow"><input type="text" id="sCityA"><button class="btn" type="button" id="sFindA">Set</button></div>
+    <div class="small" id="sCityALbl"></div>
+    <div class="fl">City 2 (Germany)</div>
+    <div class="frow"><input type="text" id="sCityB"><button class="btn" type="button" id="sFindB">Set</button></div>
+    <div class="small" id="sCityBLbl"></div>
+
+    <h4>GitHub Gist sync</h4>
+    <div class="help">1. Create a <b>classic</b> token at <a href="https://github.com/settings/tokens/new?scopes=gist&description=Personal%20dashboard" target="_blank" rel="noopener">github.com/settings/tokens</a> with only the <b>gist</b> scope.<br>2. Paste it below and leave Gist ID empty the first time: a secret gist is created for you.<br>3. On other devices, paste the same token and the Gist ID.</div>
+    <div class="fl">Token (stored only in this browser)</div>
+    <input type="password" id="sToken" autocomplete="off" placeholder="ghp_…">
+    <div class="fl">Gist ID</div>
+    <input type="text" id="sGist" autocomplete="off" placeholder="leave empty to create a new one">
+    <div class="btnrow">
+      <button class="btn primary" type="button" id="sConnect">Connect</button>
+      <button class="btn" type="button" id="sSyncNow">Sync now</button>
+      <button class="btn" type="button" id="sDisconnect">Disconnect</button>
+    </div>
+    <div class="smsg" id="sMsg"></div>
+
+    <h4>Backup</h4>
+    <div class="btnrow">
+      <button class="btn" type="button" id="sExport">Export JSON</button>
+      <button class="btn" type="button" id="sImport">Import JSON</button>
+      <input type="file" id="sImportFile" accept="application/json,.json" hidden>
+    </div>
+
+    <div class="btnrow" style="justify-content:flex-end;margin-top:20px">
+      <button class="btn primary" type="button" id="sClose">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const todayStr = () => ymd(new Date());
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+function isoWeek(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return { week: Math.ceil(((t - y0) / 864e5 + 1) / 7), year: t.getUTCFullYear() };
+}
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+/* ---------- data model ---------- */
+const DEFAULT = () => ({
+  v: 1, updatedAt: 0, name: 'Jalib',
+  kanban: { todo: [], doing: [], done: [] },
+  events: [], notes: '', focus: { date: '', text: '' }, pomo: {},
+  cities: {
+    a: { name: 'Thrissur', label: 'Thrissur, Kerala, India', lat: 10.5276, lon: 76.2144 },
+    b: { name: 'Berlin', label: 'Berlin, Germany', lat: 52.52, lon: 13.405 }
+  }
+});
+function normalize(d) {
+  const b = DEFAULT(); d = d && typeof d === 'object' ? d : {};
+  const k = d.kanban || {};
+  return {
+    ...b, ...d,
+    kanban: { todo: Array.isArray(k.todo) ? k.todo : [], doing: Array.isArray(k.doing) ? k.doing : [], done: Array.isArray(k.done) ? k.done : [] },
+    events: Array.isArray(d.events) ? d.events : [],
+    focus: { ...b.focus, ...(d.focus || {}) },
+    pomo: { ...(d.pomo || {}) },
+    cities: { a: { ...b.cities.a, ...((d.cities || {}).a || {}) }, b: { ...b.cities.b, ...((d.cities || {}).b || {}) } }
+  };
+}
+let data = normalize(LS.get('pd.data', null));
+
+/* ---------- Gist sync ---------- */
+const FILE = 'dashboard-data.json';
+let token = LS.get('pd.token', ''), gistId = LS.get('pd.gistId', '');
+let pushTimer = null, pushing = false, dirty = false;
+const syncOn = () => !!(token && gistId);
+
+function setSync(state, msg) {
+  const map = { local: ['Local only', ''], saving: ['Saving…', 'warn'], pulling: ['Syncing…', 'warn'], ok: ['Synced', 'ok'], error: ['Sync error', 'bad'], offline: ['Offline', 'bad'] };
+  const [t, c] = map[state]; const b = $('#syncBadge');
+  b.textContent = '● ' + t; b.className = 'badge ' + c; b.title = msg || '';
+}
+function saveLocal() { LS.set('pd.data', data); }
+function commit() { data.updatedAt = Date.now(); saveLocal(); dirty = true; schedulePush(); }
+function schedulePush() { if (!syncOn()) return; setSync('saving'); clearTimeout(pushTimer); pushTimer = setTimeout(push, 1500); }
+
+async function gh(path, opts = {}) {
+  const headers = { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token, 'X-GitHub-Api-Version': '2022-11-28' };
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  const r = await fetch('https://api.github.com' + path, { ...opts, headers, cache: 'no-store' });
+  if (!r.ok) { let m = ''; try { m = (await r.json()).message; } catch {} throw new Error(r.status + (m ? ' – ' + m : '')); }
+  return r.json();
+}
+async function readGist() {
+  const g = await gh('/gists/' + gistId);
+  const f = g.files && g.files[FILE];
+  if (!f) throw new Error('File ' + FILE + ' not found in this gist');
+  let txt = f.content;
+  if (f.truncated) txt = await (await fetch(f.raw_url, { cache: 'no-store' })).text();
+  return normalize(JSON.parse(txt || '{}'));
+}
+async function push() {
+  if (!syncOn()) return;
+  if (pushing) { schedulePush(); return; }
+  pushing = true;
+  try {
+    await gh('/gists/' + gistId, { method: 'PATCH', body: JSON.stringify({ files: { [FILE]: { content: JSON.stringify(data) } } }) });
+    dirty = false; setSync('ok', 'Saved ' + new Date().toLocaleTimeString());
+  } catch (e) { setSync(navigator.onLine ? 'error' : 'offline', e.message); }
+  finally { pushing = false; }
+}
+async function pull() {
+  if (!syncOn()) { setSync('local'); return; }
+  if (dirty) { await push(); return; }
+  setSync('pulling');
+  try {
+    const remote = await readGist();
+    if ((remote.updatedAt || 0) > (data.updatedAt || 0)) {
+      data = remote; saveLocal(); renderAll(); setSync('ok', 'Pulled ' + new Date().toLocaleTimeString());
+    } else if ((data.updatedAt || 0) > (remote.updatedAt || 0)) {
+      dirty = true; await push();
+    } else setSync('ok', 'Up to date');
+  } catch (e) { setSync(navigator.onLine ? 'error' : 'offline', e.message); }
+}
+const sMsg = t => { $('#sMsg').textContent = t; };
+async function connect() {
+  token = $('#sToken').value.trim(); gistId = $('#sGist').value.trim();
+  if (!token) { sMsg('Paste a GitHub token first.'); return; }
+  sMsg('Connecting…');
+  try {
+    if (!gistId) {
+      const g = await gh('/gists', { method: 'POST', body: JSON.stringify({ description: 'Personal dashboard data', public: false, files: { [FILE]: { content: JSON.stringify(data) } } }) });
+      gistId = g.id;
+    } else {
+      const remote = await readGist();
+      const useRemote = !data.updatedAt || confirm("Load the data stored in this gist?\n\nOK = replace this browser's data with the gist.\nCancel = keep this browser's data and overwrite the gist.");
+      if (useRemote) { data = remote; saveLocal(); renderAll(); }
+      else { data.updatedAt = Date.now(); saveLocal(); }
+    }
+    LS.set('pd.token', token); LS.set('pd.gistId', gistId);
+    $('#sGist').value = gistId;
+    dirty = true; await push();
+    sMsg('Connected. Gist ID: ' + gistId + ' — use this ID with the same token on your other devices.');
+  } catch (e) { sMsg('Could not connect: ' + e.message); setSync('error', e.message); token = LS.get('pd.token', ''); gistId = LS.get('pd.gistId', ''); }
+}
+function disconnect() {
+  LS.del('pd.token'); LS.del('pd.gistId'); token = ''; gistId = '';
+  $('#sToken').value = ''; $('#sGist').value = '';
+  setSync('local'); sMsg('Disconnected. Your data is still in this browser and in the gist.');
+}
+
+/* ---------- header, theme ---------- */
+function renderHeader() {
+  const h = new Date().getHours();
+  const g = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  $('#greet').textContent = g + (data.name ? ', ' + data.name : '');
+  $('#todayLine').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' · KW ' + isoWeek(new Date()).week;
+}
+(function initTheme() {
+  const t = LS.get('pd.theme', null);
+  if (t) document.documentElement.dataset.theme = t;
+  $('#themeBtn').onclick = () => {
+    const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const nxt = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = nxt; LS.set('pd.theme', nxt);
+  };
+})();
+
+/* ---------- clocks + overlap ---------- */
+const TZA = 'Asia/Kolkata', TZB = 'Europe/Berlin';
+const fT = tz => new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+const fD = tz => new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' });
+const fmtA = fT(TZA), fmtB = fT(TZB), fmtDA = fD(TZA), fmtDB = fD(TZB);
+function tzOff(tz, d = new Date()) {
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    .formatToParts(d).reduce((o, x) => (o[x.type] = x.value, o), {});
+  const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+  return Math.round((asUTC - Math.floor(d.getTime() / 1000) * 1000) / 60000);
+}
+function tzAbbr(tz) {
+  const p = new Intl.DateTimeFormat('en-GB', { timeZone: tz, timeZoneName: 'short' }).formatToParts(new Date()).find(x => x.type === 'timeZoneName');
+  return p ? p.value : '';
+}
+const hm = h => { h = ((h % 24) + 24) % 24; const H = Math.floor(h), M = Math.round((h - H) * 60); return pad(M === 60 ? H + 1 : H) + ':' + pad(M === 60 ? 0 : M); };
+function segHTML(s, e, cls) {
+  const d = e - s; s = ((s % 24) + 24) % 24; const out = [];
+  if (s + d <= 24) out.push([s, d]); else { out.push([s, 24 - s]); out.push([0, s + d - 24]); }
+  return out.map(([a, w]) => `<div class="oseg ${cls}" style="left:${a / 24 * 100}%;width:${w / 24 * 100}%"></div>`).join('');
+}
+function renderClocks() {
+  const now = new Date();
+  const tA = fmtA.format(now), tB = fmtB.format(now);
+  $('#tA').innerHTML = tA.slice(0, 5) + '<small>:' + tA.slice(6) + '</small>';
+  $('#tB').innerHTML = tB.slice(0, 5) + '<small>:' + tB.slice(6) + '</small>';
+  $('#dA').textContent = fmtDA.format(now); $('#dB').textContent = fmtDB.format(now);
+  $('#abbrB').textContent = tzAbbr(TZB);
+  const oA = tzOff(TZA, now), oB = tzOff(TZB, now), diff = (oA - oB) / 60;
+  const dh = Math.floor(Math.abs(diff)), dm = Math.round((Math.abs(diff) - dh) * 60);
+  $('#tzDiff').innerHTML = `Germany is <b>${dh}h${dm ? ' ' + dm + 'm' : ''}</b> ${diff >= 0 ? 'behind' : 'ahead of'} India`;
+  // working hours: India 09–18 IST, Germany 08–17 local, both drawn on IST axis
+  const A = [9, 18], B = [8 + diff, 17 + diff];
+  const nowH = (((now.getUTCHours() * 60 + now.getUTCMinutes() + oA) % 1440) + 1440) % 1440 / 60;
+  const lo = Math.max(A[0], B[0]), hi = Math.min(A[1], B[1]);
+  const ov = hi > lo ? segHTML(lo, hi, 'x') : '';
+  const nowLine = `<div class="onow" style="left:${nowH / 24 * 100}%"></div>`;
+  $('#barA').innerHTML = segHTML(A[0], A[1], 'a') + nowLine;
+  $('#barB').innerHTML = segHTML(B[0], B[1], 'b') + ov + nowLine;
+  const hB = (((now.getUTCHours() * 60 + now.getUTCMinutes() + oB) % 1440) + 1440) % 1440 / 60;
+  const wdB = new Intl.DateTimeFormat('en-GB', { timeZone: TZB, weekday: 'short' }).format(now);
+  const openB = hB >= 8 && hB < 17 && !['Sat', 'Sun'].includes(wdB);
+  $('#overlapNote').innerHTML = (hi > lo ? `Shared working hours <b>${hm(lo)}–${hm(hi)} IST</b> (${(hi - lo).toFixed(1).replace('.0', '')}h)` : 'No shared working hours')
+    + ` · German office ${openB ? 'open now' : 'closed now'}`;
+}
+
+/* ---------- KW ---------- */
+function renderKW() {
+  const d = new Date(); const { week, year } = isoWeek(d);
+  $('#kwNum').textContent = week;
+  const mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const f = x => x.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  $('#kwRange').textContent = `${f(mon)} – ${f(sun)} ${year}`;
+  const s = new Date(d.getFullYear(), 0, 1), e = new Date(d.getFullYear() + 1, 0, 1);
+  const doy = Math.floor((d - s) / 864e5) + 1, tot = Math.round((e - s) / 864e5);
+  $('#yearProg').style.width = (doy / tot * 100).toFixed(1) + '%';
+  $('#yearLine').textContent = `Day ${doy} of ${tot} · ${Math.round(doy / tot * 100)}% of ${d.getFullYear()} done`;
+}
+
+/* ---------- weather ---------- */
+const WMO = {0:['☀️','Clear'],1:['🌤️','Mainly clear'],2:['⛅','Partly cloudy'],3:['☁️','Overcast'],45:['🌫️','Fog'],48:['🌫️','Rime fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],55:['🌧️','Heavy drizzle'],56:['🌧️','Freezing drizzle'],57:['🌧️','Freezing drizzle'],61:['🌦️','Light rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],66:['🌧️','Freezing rain'],67:['🌧️','Freezing rain'],71:['🌨️','Light snow'],73:['🌨️','Snow'],75:['❄️','Heavy snow'],77:['🌨️','Snow grains'],80:['🌦️','Showers'],81:['🌧️','Showers'],82:['⛈️','Violent showers'],85:['🌨️','Snow showers'],86:['🌨️','Snow showers'],95:['⛈️','Thunderstorm'],96:['⛈️','Thunderstorm, hail'],99:['⛈️','Thunderstorm, hail']};
+const wmo = (c, day = 1) => { const w = WMO[c] || ['🌡️', '—']; return (!day && (c === 0 || c === 1)) ? ['🌙', w[1]] : w; };
+async function loadWx(force) {
+  const cache = LS.get('pd.wx', null);
+  const key = JSON.stringify([data.cities.a, data.cities.b].map(c => [c.lat, c.lon]));
+  if (!force && cache && cache.key === key && Date.now() - cache.t < 30 * 60e3) { renderWx(cache.res); return; }
+  try {
+    const res = await Promise.all(['a', 'b'].map(k => {
+      const c = data.cities[k];
+      const u = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=4`;
+      return fetch(u).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    }));
+    LS.set('pd.wx', { key, t: Date.now(), res }); renderWx(res);
+  } catch (e) {
+    if (cache && cache.key === key) renderWx(cache.res);
+    else $('#wx').innerHTML = `<div class="empty">Weather unavailable (${esc(e.message)})</div>`;
+  }
+}
+function renderWx(res) {
+  $('#wx').innerHTML = ['a', 'b'].map((k, i) => {
+    const r = res[i], c = data.cities[k]; if (!r || !r.current) return '';
+    const cu = r.current, [ic, ds] = wmo(cu.weather_code, cu.is_day);
+    const days = [1, 2, 3].map(j => {
+      const [di] = wmo(r.daily.weather_code[j]);
+      const nm = parseYmd(r.daily.time[j]).toLocaleDateString('en-GB', { weekday: 'short' });
+      return `<div class="wday"><div>${nm}</div><div>${di}</div><div><b>${Math.round(r.daily.temperature_2m_max[j])}°</b> ${Math.round(r.daily.temperature_2m_min[j])}°</div></div>`;
+    }).join('');
+    return `<div class="wcity">
+      <div class="wtop"><span class="wname">${esc(c.name)}</span><span class="small">${Math.round(r.daily.temperature_2m_max[0])}° / ${Math.round(r.daily.temperature_2m_min[0])}° · ☔ ${r.daily.precipitation_probability_max[0] ?? 0}%</span></div>
+      <div class="wnow"><span class="wicon">${ic}</span><span class="wtemp">${Math.round(cu.temperature_2m)}°</span>
+        <div class="wdesc">${ds}<br>Feels ${Math.round(cu.apparent_temperature)}° · 💧${cu.relative_humidity_2m}% · ${Math.round(cu.wind_speed_10m)} km/h</div></div>
+      <div class="wdays">${days}</div></div>`;
+  }).join('');
+}
+async function geocode(q) {
+  const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=' + encodeURIComponent(q));
+  const j = await r.json();
+  if (!j.results || !j.results.length) throw new Error('City not found');
+  const x = j.results[0];
+  return { name: x.name, label: [x.name, x.admin1, x.country].filter(Boolean).join(', '), lat: x.latitude, lon: x.longitude };
+}
+
+/* ---------- currency ---------- */
+let fx = null;
+async function loadFx() {
+  let c = LS.get('pd.fx', null);
+  if (!c || Date.now() - c.t > 6 * 3600e3) {
+    try {
+      const j = await (await fetch('https://api.frankfurter.app/latest?from=EUR&to=INR')).json();
+      if (j && j.rates && j.rates.INR) { c = { t: Date.now(), rate: j.rates.INR, date: j.date }; LS.set('pd.fx', c); }
+    } catch {}
+  }
+  if (!c) { $('#fxRate').textContent = 'Unavailable'; return; }
+  fx = c;
+  $('#fxRate').textContent = `1 € = ₹${fx.rate.toFixed(2)}`;
+  $('#fxDate').textContent = 'ECB reference rate · ' + fx.date;
+  $('#fxInr').value = (($('#fxEur').value || 0) * fx.rate).toFixed(2);
+}
+$('#fxEur').addEventListener('input', e => { if (fx) $('#fxInr').value = (e.target.value * fx.rate).toFixed(2); });
+$('#fxInr').addEventListener('input', e => { if (fx) $('#fxEur').value = (e.target.value / fx.rate).toFixed(2); });
+
+/* ---------- kanban ---------- */
+const COLS = ['todo', 'doing', 'done'];
+function cardHTML(c, k) {
+  return `<div class="kcard" data-id="${esc(c.id)}"><div class="ktext">${esc(c.text)}</div>
+    <div class="kmeta"><span class="tag">KW ${esc(c.kw)}</span><span class="kact">
+      <button data-a="left" title="Move left" ${k === 'todo' ? 'disabled' : ''}>‹</button>
+      <button data-a="right" title="Move right" ${k === 'done' ? 'disabled' : ''}>›</button>
+      <button data-a="edit" title="Edit">✎</button><button data-a="del" title="Delete">×</button></span></div></div>`;
+}
+function renderKanban() {
+  COLS.forEach(k => {
+    const list = $('#k-' + k);
+    list.innerHTML = data.kanban[k].length ? data.kanban[k].map(c => cardHTML(c, k)).join('') : '';
+    $('#c-' + k).textContent = data.kanban[k].length;
+  });
+}
+function findCard(id) { for (const k of COLS) { const i = data.kanban[k].findIndex(c => c.id === id); if (i > -1) return [k, i]; } return [null, -1]; }
+$('#kAddForm').addEventListener('submit', e => {
+  e.preventDefault(); const t = $('#kAddIn').value.trim(); if (!t) return;
+  data.kanban.todo.unshift({ id: uid(), text: t, kw: isoWeek(new Date()).week, created: Date.now() });
+  $('#kAddIn').value = ''; commit(); renderKanban();
+});
+$('#kanban').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const id = b.closest('.kcard').dataset.id; const [k, i] = findCard(id); if (!k) return;
+  const a = b.dataset.a, card = data.kanban[k][i];
+  if (a === 'del') { if (!confirm('Delete this task?')) return; data.kanban[k].splice(i, 1); }
+  else if (a === 'edit') { const t = prompt('Edit task', card.text); if (t == null || !t.trim()) return; card.text = t.trim(); }
+  else { const to = COLS[COLS.indexOf(k) + (a === 'left' ? -1 : 1)]; data.kanban[k].splice(i, 1); data.kanban[to].unshift(card); }
+  commit(); renderKanban();
+});
+$('#clearDone').onclick = () => { if (!data.kanban.done.length || !confirm('Remove all done tasks?')) return; data.kanban.done = []; commit(); renderKanban(); };
+function kanbanFromDom() {
+  const all = {}; COLS.forEach(k => data.kanban[k].forEach(c => all[c.id] = c));
+  COLS.forEach(k => { data.kanban[k] = [...$('#k-' + k).children].map(el => all[el.dataset.id]).filter(Boolean); });
+  commit(); renderKanban();
+}
+if (window.Sortable) COLS.forEach(k => Sortable.create($('#k-' + k), { group: 'kanban', animation: 150, delay: 120, delayOnTouchOnly: true, filter: 'button', preventOnFilter: false, onEnd: kanbanFromDom }));
+
+/* ---------- calendar ---------- */
+let calView = new Date(); calView.setDate(1); let calSel = todayStr();
+function renderCal() {
+  const y = calView.getFullYear(), m = calView.getMonth(), today = todayStr();
+  $('#calTitle').textContent = calView.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const offset = (new Date(y, m, 1).getDay() + 6) % 7, dim = new Date(y, m + 1, 0).getDate();
+  const rows = Math.ceil((offset + dim) / 7), evDates = new Set(data.events.map(e => e.date));
+  let h = '<div class="cw-h">KW</div>' + ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => `<div class="dow">${d}</div>`).join('');
+  for (let w = 0; w < rows; w++) {
+    h += `<div class="cw">${isoWeek(new Date(y, m, 1 - offset + w * 7)).week}</div>`;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(y, m, 1 - offset + w * 7 + i), s = ymd(d);
+      const cls = ['day', d.getMonth() !== m && 'out', s === today && 'today', s === calSel && 'sel', i >= 5 && 'we'].filter(Boolean).join(' ');
+      h += `<button class="${cls}" data-d="${s}">${d.getDate()}${evDates.has(s) ? '<i></i>' : ''}</button>`;
+    }
+  }
+  $('#calGrid').innerHTML = h;
+  renderDay();
+}
+const evHTML = (e, showDate) => `<div class="ev"><span class="tm">${showDate ? parseYmd(e.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : (e.time || 'all day')}</span><span class="tt">${showDate && e.time ? esc(e.time) + ' · ' : ''}${esc(e.title)}</span><button data-del="${esc(e.id)}" title="Delete">×</button></div>`;
+const evSort = (a, b) => (a.date + (a.time || '00:00')).localeCompare(b.date + (b.time || '00:00'));
+function renderDay() {
+  $('#dayHead').textContent = parseYmd(calSel).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  const evs = data.events.filter(e => e.date === calSel).sort(evSort);
+  $('#evList').innerHTML = evs.length ? evs.map(e => evHTML(e)).join('') : '<div class="empty">No events</div>';
+  const t = todayStr(), up = data.events.filter(e => e.date >= t).sort(evSort).slice(0, 5);
+  $('#upList').innerHTML = up.length ? up.map(e => evHTML(e, true)).join('') : '<div class="empty">Nothing coming up</div>';
+}
+$('#calGrid').addEventListener('click', e => { const b = e.target.closest('.day'); if (!b) return; calSel = b.dataset.d; const d = parseYmd(calSel); if (d.getMonth() !== calView.getMonth()) { calView = new Date(d.getFullYear(), d.getMonth(), 1); } renderCal(); });
+$('#calPrev').onclick = () => { calView.setMonth(calView.getMonth() - 1); renderCal(); };
+$('#calNext').onclick = () => { calView.setMonth(calView.getMonth() + 1); renderCal(); };
+$('#calToday').onclick = () => { calView = new Date(); calView.setDate(1); calSel = todayStr(); renderCal(); };
+$('#evForm').addEventListener('submit', e => {
+  e.preventDefault(); const t = $('#evTitle').value.trim(); if (!t) return;
+  data.events.push({ id: uid(), date: calSel, time: $('#evTime').value || '', title: t });
+  $('#evTitle').value = ''; $('#evTime').value = ''; commit(); renderCal();
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-del]'); if (!b) return;
+  data.events = data.events.filter(x => x.id !== b.dataset.del); commit(); renderCal();
+});
+
+/* ---------- focus + notes ---------- */
+function renderNotes() {
+  const f = $('#focusIn'), n = $('#notesIn');
+  if (document.activeElement !== f) f.value = data.focus.date === todayStr() ? data.focus.text : '';
+  if (document.activeElement !== n) n.value = data.notes;
+}
+$('#focusIn').addEventListener('input', debounce(e => { data.focus = { date: todayStr(), text: e.target.value }; commit(); }, 600));
+$('#notesIn').addEventListener('input', debounce(e => { data.notes = e.target.value; commit(); }, 600));
+
+/* ---------- pomodoro ---------- */
+const PM = { focus: 25, short: 5, long: 15 }, PMN = { focus: 'Focus', short: 'Short break', long: 'Long break' };
+const CIRC = 2 * Math.PI * 88;
+let pomo = LS.get('pd.pomoState', null) || { mode: 'focus', running: false, endAt: 0, left: 25 * 60, count: 0 };
+let audioCtx = null;
+const savePomo = () => LS.set('pd.pomoState', pomo);
+const pomoLeft = () => pomo.running ? Math.max(0, Math.round((pomo.endAt - Date.now()) / 1000)) : pomo.left;
+function pomoStart() {
+  if (pomo.running) { pomo.left = pomoLeft(); pomo.running = false; }
+  else {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    pomo.endAt = Date.now() + pomo.left * 1000; pomo.running = true;
+  }
+  savePomo(); renderPomo();
+}
+function pomoMode(m) { pomo.mode = m; pomo.running = false; pomo.left = PM[m] * 60; savePomo(); renderPomo(); }
+function pomoDone(skipped) {
+  const was = pomo.mode; pomo.running = false;
+  if (was === 'focus') {
+    if (!skipped) { const t = todayStr(); data.pomo[t] = (data.pomo[t] || 0) + 1; commit(); renderStats(); }
+    pomo.count = (pomo.count || 0) + 1; pomo.mode = pomo.count % 4 === 0 ? 'long' : 'short';
+  } else pomo.mode = 'focus';
+  pomo.left = PM[pomo.mode] * 60; savePomo();
+  if (!skipped) { beep(); notify(was === 'focus' ? 'Focus session done. Time for a break.' : 'Break over. Back to focus.'); }
+  renderPomo();
+}
+function beep() {
+  if (!audioCtx) return;
+  [0, .35, .7].forEach(t => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+    const s = audioCtx.currentTime + t;
+    g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.25, s + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, s + 0.25);
+    o.start(s); o.stop(s + 0.3);
+  });
+}
+function notify(body) { try { if ('Notification' in window && Notification.permission === 'granted') new Notification('Pomodoro', { body }); } catch {} }
+function renderPomo() {
+  const left = pomoLeft(), tot = PM[pomo.mode] * 60;
+  const txt = pad(Math.floor(left / 60)) + ':' + pad(left % 60);
+  $('#pTime').textContent = txt; $('#pMode').textContent = PMN[pomo.mode] + (pomo.running ? '' : ' · paused');
+  const fg = $('#ringFg'); fg.style.strokeDasharray = CIRC; fg.style.strokeDashoffset = CIRC * (1 - left / tot);
+  $('#ring').classList.toggle('brk', pomo.mode !== 'focus');
+  $('#pStart').textContent = pomo.running ? 'Pause' : (left < tot ? 'Resume' : 'Start');
+  document.querySelectorAll('#pModes button').forEach(b => b.classList.toggle('on', b.dataset.m === pomo.mode));
+  const n = data.pomo[todayStr()] || 0;
+  $('#pDots').textContent = n ? '🍅'.repeat(Math.min(n, 12)) + (n > 12 ? ' +' + (n - 12) : '') + ` · ${n} today` : 'No sessions yet today';
+  document.title = pomo.running ? `${txt} · ${PMN[pomo.mode]}` : 'Personal Dashboard';
+}
+$('#pStart').onclick = pomoStart;
+$('#pReset').onclick = () => pomoMode(pomo.mode);
+$('#pSkip').onclick = () => pomoDone(true);
+$('#pModes').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) pomoMode(b.dataset.m); });
+
+/* ---------- stats ---------- */
+function renderStats() {
+  const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d; });
+  const vals = days.map(d => data.pomo[ymd(d)] || 0), max = Math.max(4, ...vals), t = todayStr();
+  $('#bars').innerHTML = days.map((d, i) => `<div class="barc ${ymd(d) === t ? 'today' : ''}"><em>${vals[i] || ''}</em><i style="height:${vals[i] / max * 100}%"></i><span>${d.toLocaleDateString('en-GB', { weekday: 'narrow' })}</span></div>`).join('');
+  $('#stToday').textContent = data.pomo[t] || 0;
+  const now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  let wk = 0; for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); wk += data.pomo[ymd(d)] || 0; }
+  $('#stWeek').textContent = (wk * 25 / 60).toFixed(1).replace('.0', '') + 'h';
+  let streak = 0; const d = new Date(); if (!data.pomo[ymd(d)]) d.setDate(d.getDate() - 1);
+  while (data.pomo[ymd(d)]) { streak++; d.setDate(d.getDate() - 1); }
+  $('#stStreak').textContent = streak;
+}
+
+/* ---------- settings ---------- */
+const dlg = $('#dlg');
+$('#settingsBtn').onclick = () => {
+  $('#sName').value = data.name || '';
+  $('#sCityA').value = data.cities.a.name; $('#sCityALbl').textContent = data.cities.a.label;
+  $('#sCityB').value = data.cities.b.name; $('#sCityBLbl').textContent = data.cities.b.label;
+  $('#sToken').value = token; $('#sGist').value = gistId;
+  sMsg(syncOn() ? 'Connected to gist ' + gistId : '');
+  dlg.showModal();
+};
+$('#sClose').onclick = () => dlg.close();
+$('#sName').addEventListener('change', e => { data.name = e.target.value.trim(); commit(); renderHeader(); });
+async function setCity(k) {
+  const inp = $('#sCity' + k.toUpperCase()), lbl = $('#sCity' + k.toUpperCase() + 'Lbl');
+  lbl.textContent = 'Searching…';
+  try { data.cities[k] = await geocode(inp.value.trim()); inp.value = data.cities[k].name; lbl.textContent = data.cities[k].label; commit(); loadWx(true); }
+  catch (e) { lbl.textContent = e.message; }
+}
+$('#sFindA').onclick = () => setCity('a');
+$('#sFindB').onclick = () => setCity('b');
+$('#sConnect').onclick = connect;
+$('#sSyncNow').onclick = async () => { if (!syncOn()) { sMsg('Not connected yet.'); return; } sMsg('Syncing…'); await pull(); sMsg($('#syncBadge').title || 'Done'); };
+$('#sDisconnect').onclick = disconnect;
+$('#sExport').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  a.download = 'dashboard-backup-' + todayStr() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#sImport').onclick = () => $('#sImportFile').click();
+$('#sImportFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = normalize(JSON.parse(await f.text()));
+    if (!confirm('Replace all current dashboard data with this backup?')) return;
+    data = d; commit(); renderAll(); loadWx(true); sMsg('Backup imported.');
+  } catch (err) { sMsg('Import failed: ' + err.message); }
+  e.target.value = '';
+});
+
+/* ---------- boot ---------- */
+function renderAll() { renderHeader(); renderKW(); renderKanban(); renderCal(); renderNotes(); renderStats(); renderPomo(); }
+let lastDay = todayStr();
+renderAll(); renderClocks(); loadWx(); loadFx();
+setSync(syncOn() ? 'pulling' : 'local'); pull();
+setInterval(() => {
+  renderClocks();
+  if (pomo.running && pomoLeft() <= 0) pomoDone(false); else renderPomo();
+  if (todayStr() !== lastDay) { lastDay = todayStr(); calView = new Date(); calView.setDate(1); calSel = lastDay; renderAll(); }
+}, 1000);
+setInterval(() => { renderHeader(); loadWx(); }, 10 * 60e3);
+setInterval(() => { if (!document.hidden) pull(); }, 5 * 60e3);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(); });
+window.addEventListener('online', () => pull());
+window.addEventListener('beforeunload', e => { if (dirty && syncOn()) { push(); } });
+</script>
+</body>
+</html>
