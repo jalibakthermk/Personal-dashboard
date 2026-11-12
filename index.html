@@ -92,16 +92,23 @@ input:focus,textarea:focus{border-color:var(--acc)}
 .wday{background:var(--card);border-radius:8px;padding:6px;text-align:center;font-size:12px}
 .wday div:first-child{color:var(--mute)}
 
-/* KW + fx */
+/* KW */
 .kw{display:flex;align-items:baseline;gap:8px}
 .kw .big{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1}
 .kw .lbl{font-weight:700;color:var(--acc)}
 .prog{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin:12px 0 6px}
 .prog i{display:block;height:100%;background:var(--acc)}
 .small{font-size:12px;color:var(--mute)}
-.fxrate{font-size:22px;font-weight:700}
-.fxrow{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;margin-top:8px}
-.fxrow span{font-weight:700;width:30px;color:var(--mute)}
+.disp-card{background:#060809;border-color:#0f3a40}
+.disp-card h2{color:#2fb9c6}
+.dmode{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.1em;color:#5ff3ff;border:1px solid #0f4a52;border-radius:5px;padding:1px 6px;background:none;cursor:pointer}
+.disp{position:relative;background:#000;border:1px solid #0d2e33;border-radius:8px;padding:6px;box-shadow:inset 0 0 18px rgba(0,229,255,.08)}
+.disp canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+.disp::after{content:"";position:absolute;inset:6px;pointer-events:none;border-radius:4px;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.22) 2px 3px)}
+.dcap{font-family:"JetBrains Mono",monospace;font-size:10px;color:#1d7f89;margin-top:8px;display:flex;justify-content:space-between}
+textarea.bmp{font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.15;min-height:150px;white-space:pre;overflow:auto;resize:vertical}
+.ctl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mute)}
+.ctl input[type=range]{width:110px}
 
 /* kanban */
 .kadd{display:flex;gap:8px;margin-bottom:12px}
@@ -250,12 +257,10 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <div class="prog"><i id="yearProg"></i></div>
       <div class="small" id="yearLine"></div>
     </section>
-    <section class="card">
-      <h2>EUR ⇄ INR</h2>
-      <div class="fxrate" id="fxRate">…</div>
-      <div class="small" id="fxDate"></div>
-      <div class="fxrow"><span>€</span><input type="number" id="fxEur" value="1" min="0" step="any"></div>
-      <div class="fxrow"><span>₹</span><input type="number" id="fxInr" min="0" step="any"></div>
+    <section class="card disp-card">
+      <h2>Display <button class="dmode" id="dispMode" title="Click to switch mode">TEXT</button></h2>
+      <div class="disp"><canvas id="dispCanvas" width="384" height="128"></canvas></div>
+      <div class="dcap"><span>48×16 · 1-BIT</span><span id="dispCap">CH-1</span></div>
     </section>
   </div>
 
@@ -356,6 +361,22 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     <div class="frow"><input type="text" id="sCityB"><button class="btn" type="button" id="sFindB">Set</button></div>
     <div class="small" id="sCityBLbl"></div>
 
+    <h4>Retro display</h4>
+    <div class="fl">Show</div>
+    <div class="pmodes" id="sDispMode"><button type="button" data-v="text">Text</button><button type="button" data-v="image">Image</button><button type="button" data-v="both">Alternate</button></div>
+    <div class="fl">Custom text · live tokens: {IN} {DE} {KW} {DATE} {NAME}</div>
+    <input type="text" id="sDispText" maxlength="120" autocomplete="off">
+    <div class="fl">Binary image · 1 (or #) = on, 0 (or .) = off · up to 48×16, small images are scaled up</div>
+    <textarea class="bmp" id="sDispBmp" spellcheck="false"></textarea>
+    <div class="small" id="sDispInfo"></div>
+    <div class="btnrow" style="align-items:center">
+      <button class="btn" type="button" id="sDispUpload">Convert a picture…</button>
+      <input type="file" id="sDispFile" accept="image/*" hidden>
+      <label class="ctl">Threshold <input type="range" id="sDispThr" min="1" max="254" value="128"></label>
+      <label class="ctl"><input type="checkbox" id="sDispInv"> Invert</label>
+      <button class="btn" type="button" id="sDispClear">Clear</button>
+    </div>
+
     <h4>GitHub Gist sync</h4>
     <div class="help">1. Create a <b>classic</b> token at <a href="https://github.com/settings/tokens/new?scopes=gist&description=Personal%20dashboard" target="_blank" rel="noopener">github.com/settings/tokens</a> with only the <b>gist</b> scope.<br>2. Paste it below and leave Gist ID empty the first time: a secret gist is created for you.<br>3. On other devices, paste the same token and the Gist ID.</div>
     <div class="fl">Token (stored only in this browser)</div>
@@ -410,6 +431,7 @@ const DEFAULT = () => ({
   v: 1, updatedAt: 0, name: 'Jalib',
   kanban: { todo: [], doing: [], done: [] },
   events: [], notes: '', focus: { date: '', text: '' }, pomo: {},
+  display: { mode: 'both', text: 'HALLO {NAME} - KW {KW} - IN {IN} DE {DE}', bitmap: '00100000100\n00010001000\n00111111100\n01101110110\n11111111111\n10111111101\n10100000101\n00011011000' },
   cities: {
     a: { name: 'Thrissur', label: 'Thrissur, Kerala, India', lat: 10.5276, lon: 76.2144 },
     b: { name: 'Berlin', label: 'Berlin, Germany', lat: 52.52, lon: 13.405 }
@@ -424,6 +446,7 @@ function normalize(d) {
     events: Array.isArray(d.events) ? d.events : [],
     focus: { ...b.focus, ...(d.focus || {}) },
     pomo: { ...(d.pomo || {}) },
+    display: { ...b.display, ...(d.display || {}) },
     cities: { a: { ...b.cities.a, ...((d.cities || {}).a || {}) }, b: { ...b.cities.b, ...((d.cities || {}).b || {}) } }
   };
 }
@@ -629,24 +652,166 @@ async function geocode(q) {
   return { name: x.name, label: [x.name, x.admin1, x.country].filter(Boolean).join(', '), lat: x.latitude, lon: x.longitude };
 }
 
-/* ---------- currency ---------- */
-let fx = null;
-async function loadFx() {
-  let c = LS.get('pd.fx', null);
-  if (!c || Date.now() - c.t > 6 * 3600e3) {
-    try {
-      const j = await (await fetch('https://api.frankfurter.app/latest?from=EUR&to=INR')).json();
-      if (j && j.rates && j.rates.INR) { c = { t: Date.now(), rate: j.rates.INR, date: j.date }; LS.set('pd.fx', c); }
-    } catch {}
+/* ---------- retro display ---------- */
+const DW = 48, DH = 16;
+const FONT = {
+  'A':'01110 10001 10001 11111 10001 10001 10001','B':'11110 10001 10001 11110 10001 10001 11110','C':'01110 10001 10000 10000 10000 10001 01110',
+  'D':'11110 10001 10001 10001 10001 10001 11110','E':'11111 10000 10000 11110 10000 10000 11111','F':'11111 10000 10000 11110 10000 10000 10000',
+  'G':'01110 10001 10000 10111 10001 10001 01111','H':'10001 10001 10001 11111 10001 10001 10001','I':'01110 00100 00100 00100 00100 00100 01110',
+  'J':'00111 00010 00010 00010 00010 10010 01100','K':'10001 10010 10100 11000 10100 10010 10001','L':'10000 10000 10000 10000 10000 10000 11111',
+  'M':'10001 11011 10101 10101 10001 10001 10001','N':'10001 10001 11001 10101 10011 10001 10001','O':'01110 10001 10001 10001 10001 10001 01110',
+  'P':'11110 10001 10001 11110 10000 10000 10000','Q':'01110 10001 10001 10001 10101 10010 01101','R':'11110 10001 10001 11110 10100 10010 10001',
+  'S':'01111 10000 10000 01110 00001 00001 11110','T':'11111 00100 00100 00100 00100 00100 00100','U':'10001 10001 10001 10001 10001 10001 01110',
+  'V':'10001 10001 10001 10001 10001 01010 00100','W':'10001 10001 10001 10101 10101 10101 01010','X':'10001 10001 01010 00100 01010 10001 10001',
+  'Y':'10001 10001 10001 01010 00100 00100 00100','Z':'11111 00001 00010 00100 01000 10000 11111',
+  '0':'01110 10001 10011 10101 11001 10001 01110','1':'00100 01100 00100 00100 00100 00100 01110','2':'01110 10001 00001 00010 00100 01000 11111',
+  '3':'11111 00010 00100 00010 00001 10001 01110','4':'00010 00110 01010 10010 11111 00010 00010','5':'11111 10000 11110 00001 00001 10001 01110',
+  '6':'00110 01000 10000 11110 10001 10001 01110','7':'11111 00001 00010 00100 01000 01000 01000','8':'01110 10001 10001 01110 10001 10001 01110',
+  '9':'01110 10001 10001 01111 00001 00010 01100',' ':'00000 00000 00000 00000 00000 00000 00000',
+  '.':'00000 00000 00000 00000 00000 01100 01100',',':'00000 00000 00000 00000 01100 00100 01000','!':'00100 00100 00100 00100 00100 00000 00100',
+  '?':'01110 10001 00001 00010 00100 00000 00100',':':'00000 01100 01100 00000 01100 01100 00000','-':'00000 00000 00000 11111 00000 00000 00000',
+  '+':'00000 00100 00100 11111 00100 00100 00000','/':'00000 00001 00010 00100 01000 10000 00000',"'":'00100 00100 01000 00000 00000 00000 00000',
+  '(':'00010 00100 01000 01000 01000 00100 00010',')':'01000 00100 00010 00010 00010 00100 01000','#':'01010 01010 11111 01010 11111 01010 01010',
+  '%':'11000 11001 00010 00100 01000 10011 00011','*':'00000 00100 10101 01110 10101 00100 00000','=':'00000 00000 11111 00000 11111 00000 00000',
+  '_':'00000 00000 00000 00000 00000 00000 11111','<':'00010 00100 01000 10000 01000 00100 00010','>':'01000 00100 00010 00001 00010 00100 01000',
+  '&':'01100 10010 10100 01000 10101 10010 01101','@':'01110 10001 00001 01101 10101 10101 01110','"':'01010 01010 00000 00000 00000 00000 00000',
+  '♥':'00000 01010 11111 11111 01110 00100 00000','°':'01100 10010 10010 01100 00000 00000 00000','€':'00111 01000 11110 01000 11110 01000 00111',
+  'Ä':'01010 00000 01110 10001 11111 10001 10001','Ö':'01010 00000 01110 10001 10001 10001 01110','Ü':'01010 00000 10001 10001 10001 10001 01110','ß':'01110 10001 10010 10110 10001 10001 10110'
+};
+const blankGrid = () => [...Array(DH)].map(() => Array(DW).fill(false));
+function textCols(str) {
+  const cols = [];
+  for (const ch0 of [...str]) {
+    const ch = FONT[ch0] ? ch0 : ch0.toUpperCase();
+    const g = (FONT[ch] || FONT['?']).split(' ');
+    for (let x = 0; x < 5; x++) { let c = 0; for (let y = 0; y < 7; y++) if (g[y][x] === '1') c |= 1 << y; cols.push(c); }
+    cols.push(0);
   }
-  if (!c) { $('#fxRate').textContent = 'Unavailable'; return; }
-  fx = c;
-  $('#fxRate').textContent = `1 € = ₹${fx.rate.toFixed(2)}`;
-  $('#fxDate').textContent = 'ECB reference rate · ' + fx.date;
-  $('#fxInr').value = (($('#fxEur').value || 0) * fx.rate).toFixed(2);
+  if (cols.length) cols.pop();
+  return cols;
 }
-$('#fxEur').addEventListener('input', e => { if (fx) $('#fxInr').value = (e.target.value * fx.rate).toFixed(2); });
-$('#fxInr').addEventListener('input', e => { if (fx) $('#fxEur').value = (e.target.value / fx.rate).toFixed(2); });
+function parseBitmap(txt) {
+  let rows = String(txt || '').split(/\r?\n/).map(r => r.replace(/\s+$/, ''));
+  while (rows.length && !rows[rows.length - 1].trim()) rows.pop();
+  while (rows.length && !rows[0].trim()) rows.shift();
+  const w = rows.reduce((m, r) => Math.max(m, r.length), 0), h = rows.length;
+  const px = rows.map(r => [...r.padEnd(w, '0')].map(c => /[1#xX*@█■]/.test(c)));
+  return { w, h, px };
+}
+function fitBitmap(bm) {
+  const g = blankGrid(); if (!bm.w || !bm.h) return { g, s: 0 };
+  const fits = bm.w <= DW && bm.h <= DH;
+  const s = fits ? Math.max(1, Math.floor(Math.min(DW / bm.w, DH / bm.h))) : Math.min(DW / bm.w, DH / bm.h);
+  const w = Math.max(1, Math.round(bm.w * s)), h = Math.max(1, Math.round(bm.h * s));
+  const ox = Math.floor((DW - w) / 2), oy = Math.floor((DH - h) / 2);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++)
+    g[oy + y][ox + x] = bm.px[Math.min(bm.h - 1, Math.floor(y / s))][Math.min(bm.w - 1, Math.floor(x / s))];
+  return { g, s };
+}
+function dispText() {
+  const now = new Date();
+  return (data.display.text || '').replace(/\{(IN|DE|KW|NAME|DATE)\}/gi, (_, k) => {
+    k = k.toUpperCase();
+    if (k === 'IN') return fmtA.format(now).slice(0, 5);
+    if (k === 'DE') return fmtB.format(now).slice(0, 5);
+    if (k === 'KW') return String(isoWeek(now).week);
+    if (k === 'NAME') return (data.name || '').toUpperCase();
+    return pad(now.getDate()) + '.' + pad(now.getMonth() + 1) + '.';
+  });
+}
+const dCan = $('#dispCanvas'), dCtx = dCan.getContext('2d');
+let dImg = blankGrid(), dScroll = 0, dPhase = 'text', dPhaseAt = Date.now(), dLast = '';
+function dispRefresh() {
+  dImg = fitBitmap(parseBitmap(data.display.bitmap)).g;
+  if (data.display.mode !== 'both') dPhase = data.display.mode;
+  $('#dispMode').textContent = { text: 'TEXT', image: 'IMAGE', both: 'ALT' }[data.display.mode] || 'TEXT';
+  dLast = '';
+}
+function textGrid() {
+  const cols = textCols(dispText()), g = blankGrid(), y0 = Math.floor((DH - 7) / 2);
+  let off, scrolling = cols.length > DW;
+  if (!scrolling) off = Math.floor((DW - cols.length) / 2);
+  else off = DW - (dScroll % (cols.length + DW));
+  for (let x = 0; x < DW; x++) { const c = cols[x - off]; if (c) for (let y = 0; y < 7; y++) if (c & (1 << y)) g[y0 + y][x] = true; }
+  return { g, scrolling, period: cols.length + DW };
+}
+function drawGrid(g) {
+  const key = g.map(r => r.map(v => v ? 1 : 0).join('')).join('');
+  if (key === dLast) return; dLast = key;
+  const cw = dCan.width / DW, ch = dCan.height / DH, m = cw * 0.12;
+  dCtx.fillStyle = '#000'; dCtx.fillRect(0, 0, dCan.width, dCan.height);
+  dCtx.shadowBlur = 0; dCtx.fillStyle = '#05272b';
+  for (let y = 0; y < DH; y++) for (let x = 0; x < DW; x++) if (!g[y][x]) dCtx.fillRect(x * cw + m, y * ch + m, cw - 2 * m, ch - 2 * m);
+  dCtx.shadowColor = '#00e5ff'; dCtx.shadowBlur = cw * 1.1; dCtx.fillStyle = '#5ff6ff';
+  for (let y = 0; y < DH; y++) for (let x = 0; x < DW; x++) if (g[y][x]) dCtx.fillRect(x * cw + m, y * ch + m, cw - 2 * m, ch - 2 * m);
+  dCtx.shadowBlur = 0;
+}
+function dispTick() {
+  if (document.hidden) return;
+  const mode = data.display.mode;
+  if (mode === 'both') {
+    const age = Date.now() - dPhaseAt;
+    if (dPhase === 'image' && age > 5000) { dPhase = 'text'; dPhaseAt = Date.now(); dScroll = 0; }
+  }
+  if (dPhase === 'image') { drawGrid(dImg); $('#dispCap').textContent = 'CH-2 IMG'; return; }
+  const t = textGrid();
+  drawGrid(t.g); $('#dispCap').textContent = 'CH-1 TXT';
+  if (t.scrolling) dScroll++;
+  if (mode === 'both' && ((t.scrolling && dScroll >= t.period) || (!t.scrolling && Date.now() - dPhaseAt > 5000))) { dPhase = 'image'; dPhaseAt = Date.now(); }
+}
+function dispStart() { dispRefresh(); setInterval(dispTick, 70); }
+$('#dispMode').onclick = () => {
+  const order = ['text', 'image', 'both'];
+  data.display.mode = order[(order.indexOf(data.display.mode) + 1) % 3];
+  dPhase = data.display.mode === 'image' ? 'image' : 'text'; dPhaseAt = Date.now(); dScroll = 0;
+  commit(); dispRefresh();
+};
+/* display settings */
+function dispSettingsFill() {
+  $('#sDispText').value = data.display.text;
+  $('#sDispBmp').value = data.display.bitmap;
+  document.querySelectorAll('#sDispMode button').forEach(b => b.classList.toggle('on', b.dataset.v === data.display.mode));
+  dispInfo();
+}
+function dispInfo() {
+  const bm = parseBitmap(data.display.bitmap), f = fitBitmap(bm);
+  $('#sDispInfo').textContent = !bm.w ? 'No image yet.' :
+    `${bm.w}×${bm.h} px` + (f.s > 1 ? ` · shown at ${f.s}× scale` : f.s < 1 ? ' · larger than 48×16, scaled down' : '');
+}
+$('#sDispMode').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  data.display.mode = b.dataset.v; dPhase = b.dataset.v === 'image' ? 'image' : 'text'; dPhaseAt = Date.now(); dScroll = 0;
+  commit(); dispRefresh(); dispSettingsFill();
+});
+$('#sDispText').addEventListener('input', debounce(e => { data.display.text = e.target.value; dScroll = 0; commit(); dLast = ''; }, 400));
+const saveBmp = () => { data.display.bitmap = $('#sDispBmp').value; commit(); dispRefresh(); dispInfo(); };
+$('#sDispBmp').addEventListener('input', debounce(saveBmp, 400));
+$('#sDispClear').onclick = () => { $('#sDispBmp').value = ''; saveBmp(); };
+let dSrcImg = null;
+function imgToBits() {
+  if (!dSrcImg) return;
+  const s = Math.min(DW / dSrcImg.width, DH / dSrcImg.height);
+  const w = Math.max(1, Math.round(dSrcImg.width * s)), h = Math.max(1, Math.round(dSrcImg.height * s));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(dSrcImg, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, thr = +$('#sDispThr').value, inv = $('#sDispInv').checked, rows = [];
+  for (let yy = 0; yy < h; yy++) {
+    let r = '';
+    for (let xx = 0; xx < w; xx++) { const i = (yy * w + xx) * 4; let on = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) < thr; if (inv) on = !on; r += on ? '1' : '0'; }
+    rows.push(r);
+  }
+  $('#sDispBmp').value = rows.join('\n'); saveBmp();
+}
+$('#sDispUpload').onclick = () => $('#sDispFile').click();
+$('#sDispFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = () => { dSrcImg = img; imgToBits(); URL.revokeObjectURL(url); if (data.display.mode === 'text') { data.display.mode = 'image'; commit(); dispRefresh(); dispSettingsFill(); } };
+  img.onerror = () => { $('#sDispInfo').textContent = 'Could not read that picture.'; URL.revokeObjectURL(url); };
+  img.src = url; e.target.value = '';
+});
+$('#sDispThr').addEventListener('input', imgToBits);
+$('#sDispInv').addEventListener('change', () => { if (dSrcImg) imgToBits(); else { $('#sDispBmp').value = $('#sDispBmp').value.replace(/[01]/g, c => c === '1' ? '0' : '1'); saveBmp(); } });
 
 /* ---------- kanban ---------- */
 const COLS = ['todo', 'doing', 'done'];
@@ -813,6 +978,7 @@ $('#settingsBtn').onclick = () => {
   $('#sName').value = data.name || '';
   $('#sCityA').value = data.cities.a.name; $('#sCityALbl').textContent = data.cities.a.label;
   $('#sCityB').value = data.cities.b.name; $('#sCityBLbl').textContent = data.cities.b.label;
+  dispSettingsFill();
   $('#sToken').value = token; $('#sGist').value = gistId;
   sMsg(syncOn() ? 'Connected to gist ' + gistId : '');
   dlg.showModal();
@@ -847,9 +1013,9 @@ $('#sImportFile').addEventListener('change', async e => {
 });
 
 /* ---------- boot ---------- */
-function renderAll() { renderHeader(); renderKW(); renderKanban(); renderCal(); renderNotes(); renderStats(); renderPomo(); }
+function renderAll() { dispRefresh(); renderHeader(); renderKW(); renderKanban(); renderCal(); renderNotes(); renderStats(); renderPomo(); }
 let lastDay = todayStr();
-renderAll(); renderClocks(); loadWx(); loadFx();
+renderAll(); renderClocks(); loadWx(); dispStart();
 setSync(syncOn() ? 'pulling' : 'local'); pull();
 setInterval(() => {
   renderClocks();
